@@ -1,7 +1,7 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { CheckIcon } from "lucide-react"
-import { toast } from "@/components/ui/toast"
 import type { Destination } from "@/lib/destinations"
 import BookingCard from "./booking/BookingCard"
 
@@ -16,13 +16,11 @@ export function DestinationBookingCard({
 }: {
   destination: Destination
 }) {
-  function handleBookNow() {
-    toast.add({
-      type: "info",
-      title: "Bookings are not open yet",
-      description:
-        "This travel package is on the list — online booking is coming soon.",
-    })
+  const router = useRouter()
+
+  // Called by BookingCard when guests try to book — sends them to login.
+  function handleGuestBook() {
+    router.push("/login")
   }
 
   return (
@@ -38,7 +36,7 @@ export function DestinationBookingCard({
       <BookingCard
         destination={destination}
         departureDate={destination.departureDate}
-        onBookNow={handleBookNow}
+        onBookNow={handleGuestBook}
       />
 
       <ul className="mt-5 space-y-2.5">

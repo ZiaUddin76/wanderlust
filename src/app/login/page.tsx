@@ -18,36 +18,42 @@ import {
 import { Input } from "@/components/ui/input"
 import { authClient } from "@/lib/auth-client"
 import Link from "next/link"
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 
 
 export default function LogInPage() {
 
     const router = useRouter();
+    const [error, setError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleEmailLogin = async (e:React.SubmitEvent<HTMLElement>) => {
+    const handleEmailLogin = async (e: React.FormEvent<HTMLFormElement>) => {
 
         e.preventDefault()
 
-        const formData = new FormData(e.target)
-        const user = Object.fromEntries(formData.entries()) as {email:string, password:string}
+        const formElement = e.currentTarget
+        const user = Object.fromEntries(new FormData(formElement).entries()) as {email:string, password:string}
 
-        // console.log(user);
+        setError(null)
+        setIsSubmitting(true)
 
-        const {data, error} = await authClient.signIn.email({
+        const { data, error } = await authClient.signIn.email({
             ...user,
         })
 
-        if(data)
-        {
-            // console.log(data);
-            router.push('/');
+        setIsSubmitting(false)
+
+        if (data) {
+            router.push('/my-bookings')
         }
 
-        if(error)
-        {
-            console.log(error);
+        if (error) {
+            setError(
+                error.message ||
+                "Login failed. Please check your email and password.",
+            )
         }
 
     }
@@ -59,7 +65,7 @@ export default function LogInPage() {
                 <CardHeader className="text-center">
                     <CardTitle className="text-xl">Welcome back</CardTitle>
                     <CardDescription>
-                        Login with your Apple or Google account
+                        Login with your email and password
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -114,7 +120,17 @@ export default function LogInPage() {
                                 <Input id="password" name="password" type="password" required />
                             </Field>
                             <Field>
-                                <Button type="submit">Login</Button>
+                                <Button type="submit" disabled={isSubmitting}>
+                                    {isSubmitting ? "Logging in..." : "Login"}
+                                </Button>
+                                {error ? (
+                                    <p
+                                        role="alert"
+                                        className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600"
+                                    >
+                                        {error}
+                                    </p>
+                                ) : null}
                                 <FieldDescription className="text-center">
                                 Don&apos;t have an account? <Link href="/signup">SignUp</Link>
                                 </FieldDescription>

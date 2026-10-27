@@ -1,7 +1,6 @@
 "use client"
 import Image from "next/image"
 import Link from "next/link"
-import { CircleUserRoundIcon } from "lucide-react"
 import { authClient } from "@/lib/auth-client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -34,8 +33,6 @@ export function Navbar() {
   const {
     data: session,
     isPending, //loading state
-    error, //error object
-    refetch //refetch the session
   } = authClient.useSession()
 
 
@@ -79,20 +76,10 @@ export function Navbar() {
       </Link>
 
       <nav className="flex items-center justify-end gap-5" aria-label="Account">
-        <Link
-          href="/profile"
-          className="flex items-center gap-1.5 text-sm font-medium text-zinc-800 transition-colors hover:text-brand"
-        >
-          <CircleUserRoundIcon className="size-4" />
-          Profile
-        </Link>
-
-
-
-
 
         {
-          user ? <Popover>
+          // Avoid flashing the Login/Sign Up links while the session is loading.
+          isPending ? null : user ? <Popover>
             <PopoverTrigger
               render={
                 <button type="button" aria-label="Open account menu">

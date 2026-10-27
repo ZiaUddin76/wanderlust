@@ -18,36 +18,45 @@ import {
 import { Input } from "@/components/ui/input"
 import { authClient } from "@/lib/auth-client"
 import Link from "next/link"
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 
 
 export default function SignUpPage() {
 
     const router = useRouter();
+    const [error, setError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleEmailSignUp = async (e:React.SubmitEvent<HTMLElement>) => {
+    const handleEmailSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
 
         e.preventDefault()
 
-        const formData = new FormData(e.target)
-        const user = Object.fromEntries(formData.entries()) as {name:string, image: string, email:string, password:string}
+        const formElement = e.currentTarget
+        const user = Object.fromEntries(new FormData(formElement).entries()) as {name:string, image?: string, email:string, password:string}
 
-        // console.log(user);
+        setError(null)
+        setIsSubmitting(true)
 
-        const {data, error} = await authClient.signUp.email({
-            ...user,
+        const { data, error } = await authClient.signUp.email({
+            name: user.name,
+            email: user.email,
+            password: user.password,
+            image: user.image && user.image.trim() !== "" ? user.image : undefined,
         })
 
-        if(data)
-        {
-            // console.log(data);
-            router.push('/');
+        setIsSubmitting(false)
+
+        if (data) {
+            router.push('/')
         }
 
-        if(error)
-        {
-            console.log(error);
+        if (error) {
+            setError(
+                error.message ||
+                "Sign up failed. That email may already be in use.",
+            )
         }
 
     }
@@ -57,9 +66,9 @@ export default function SignUpPage() {
         <div className="flex flex-col gap-6 max-w-6xl mx-auto my-10">
             <Card>
                 <CardHeader className="text-center">
-                    <CardTitle className="text-xl">Welcome back</CardTitle>
+                    <CardTitle className="text-xl">Create your account</CardTitle>
                     <CardDescription>
-                        Login with your Apple or Google account
+                        Sign up with your name, email and password
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -100,13 +109,12 @@ export default function SignUpPage() {
                                 />
                             </Field>
                             <Field>
-                                <FieldLabel htmlFor="name">ImageUrl</FieldLabel>
+                                <FieldLabel htmlFor="image">Image URL (optional)</FieldLabel>
                                 <Input
                                     id="image"
                                     type="url"
                                     name="image"
-                                    placeholder="Image URL"
-                                    required
+                                    placeholder="https://example.com/avatar.jpg"
                                 />
                             </Field>
 
@@ -133,7 +141,17 @@ export default function SignUpPage() {
                                 <Input id="password" name="password" type="password" required />
                             </Field>
                             <Field>
-                                <Button type="submit">SignUp</Button>
+                                <Button type="submit" disabled={isSubmitting}>
+                                    {isSubmitting ? "Signing up..." : "SignUp"}
+                                </Button>
+                                {error ? (
+                                    <p
+                                        role="alert"
+                                        className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600"
+                                    >
+                                        {error}
+                                    </p>
+                                ) : null}
                                 <FieldDescription className="text-center">
                                 Have an account? <Link href="/login">Login</Link>
                                 </FieldDescription>

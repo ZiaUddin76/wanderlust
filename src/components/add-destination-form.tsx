@@ -19,16 +19,13 @@ import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/toast"
 import {
+  apiBaseUrl,
   destinationCategories as categories,
   getErrorDescription,
 } from "@/lib/destinations"
 
 const fieldClass =
   "bg-slate-100 border-slate-200 px-3 placeholder:text-slate-400"
-
-const apiBaseUrl = (
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
-).replace(/\/+$/, "")
 
 export function AddDestinationForm() {
   const router = useRouter()

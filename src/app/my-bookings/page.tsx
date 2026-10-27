@@ -16,7 +16,7 @@ const MyBookingsPage = async () => {
   const user = session?.user;
 
   if (!user) {
-    redirect('/signin');
+    redirect('/login');
   }
 
   const bookings = await getBookingsByEmail(user.email);

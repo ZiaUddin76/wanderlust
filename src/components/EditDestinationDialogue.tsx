@@ -58,13 +58,13 @@ export function EditDestinationDialog({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    const token = await getTokenFromClient()
-
     // React clears event.currentTarget as soon as this async handler first
     // awaits, so keep a direct reference to the form element up front.
     const formElement = event.currentTarget
     const payload = Object.fromEntries(new FormData(formElement).entries())
     payload.category = category
+
+    const token = await getTokenFromClient()
 
     setIsSubmitting(true)
 

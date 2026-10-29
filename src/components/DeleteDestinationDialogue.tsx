@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { toast } from "@/components/ui/toast"
 import { deleteDestination } from "@/lib/destinations"
+import { getTokenFromClient } from "@/lib/getTokenFromClient"
 
 export function DeleteDestinationDialog({ id }: { id: string }) {
   const router = useRouter()
@@ -29,7 +30,8 @@ export function DeleteDestinationDialog({ id }: { id: string }) {
   async function handleDelete() {
     setIsDeleting(true)
 
-    const result = await deleteDestination(id)
+    const token = await getTokenFromClient()
+    const result = await deleteDestination(id, token)
 
     setIsDeleting(false)
 

@@ -28,7 +28,13 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Spinner } from "@/components/ui/spinner"
 import { toast } from "@/components/ui/toast"
-import { formatBookingDate, cancelBooking, type Booking, type BookingStatus } from "@/lib/bookings"
+import {
+  formatBookingDate,
+  cancelBooking,
+  type Booking,
+  type BookingStatus,
+} from "@/lib/bookings"
+import { getTokenFromClient } from "@/lib/getTokenFromClient"
 
 const statusMeta: Record<
   BookingStatus,
@@ -57,7 +63,8 @@ export function BookingListCard({ booking }: { booking: Booking }) {
   const handleCancel = async () => {
     setIsCancelling(true)
 
-    const result = await cancelBooking(booking.id)
+    const token = await getTokenFromClient()
+    const result = await cancelBooking(booking.id, token)
 
     setIsCancelling(false)
 

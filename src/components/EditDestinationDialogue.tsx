@@ -31,6 +31,7 @@ import {
   destinationCategories as categories,
   type Destination,
 } from "@/lib/destinations"
+import { getTokenFromClient } from "@/lib/getTokenFromClient"
 
 const fieldClass =
   "bg-slate-100 border-slate-200 px-3 placeholder:text-slate-400"
@@ -57,6 +58,8 @@ export function EditDestinationDialog({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
+    const token = await getTokenFromClient()
+
     // React clears event.currentTarget as soon as this async handler first
     // awaits, so keep a direct reference to the form element up front.
     const formElement = event.currentTarget
@@ -65,7 +68,7 @@ export function EditDestinationDialog({
 
     setIsSubmitting(true)
 
-    const result = await updateDestination(destination.id, payload)
+    const result = await updateDestination(destination.id, payload, token)
 
     setIsSubmitting(false)
 

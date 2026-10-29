@@ -23,6 +23,7 @@ import {
   destinationCategories as categories,
   getErrorDescription,
 } from "@/lib/destinations"
+import { getTokenFromClient } from "@/lib/getTokenFromClient"
 
 const fieldClass =
   "bg-slate-100 border-slate-200 px-3 placeholder:text-slate-400"
@@ -34,6 +35,8 @@ export function AddDestinationForm() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    const token = await getTokenFromClient()
 
     // React clears event.currentTarget as soon as this async handler first
     // awaits, so keep a direct reference to the form element up front.
@@ -48,6 +51,7 @@ export function AddDestinationForm() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          authorization: `Bearer ${token}`
         },
         body: JSON.stringify(payload),
       })

@@ -12,6 +12,7 @@ import {
     type Destination,
 } from "@/lib/destinations"
 import { authClient } from "@/lib/auth-client"
+import { getTokenFromClient } from "@/lib/getTokenFromClient"
 
 interface BookingCardProps {
     destination: Destination
@@ -60,6 +61,8 @@ const BookingCard = ({
 
         setIsBooking(true)
 
+        const token = await getTokenFromClient()
+
         try {
             // The express backend ignores unknown fields, but keep the payload
             // clean instead of spreading Mongo internals such as `_id`.
@@ -67,6 +70,7 @@ const BookingCard = ({
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    ...(token ? { authorization: `Bearer ${token}` } : {}),
                 },
                 body: JSON.stringify({
                     destinationId: destination.id,

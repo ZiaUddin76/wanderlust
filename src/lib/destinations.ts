@@ -13,9 +13,21 @@ export interface Destination {
   highlights?: string[]
 }
 
-export const apiBaseUrl = (
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
-).replace(/\/+$/, "")
+/**
+ * Base URL of the travel-package backend. `NEXT_PUBLIC_API_URL` is a
+ * build-time variable: it must exist in the environment whenever the app
+ * is bundled (the local `.env`, or the Vercel dashboard for deploys).
+ * There is deliberately no hardcoded fallback in the code — a missing
+ * value fails loudly below instead of silently calling the wrong host.
+ */
+if (!process.env.NEXT_PUBLIC_API_URL) {
+  throw new Error(
+    "NEXT_PUBLIC_API_URL is not set. Copy .env.example to .env (local) " +
+      "or set the variable in your Vercel project (deployed).",
+  )
+}
+
+export const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, "")
 
 export function asString(value: unknown): string {
   return typeof value === "string" ? value.trim() : ""
@@ -35,12 +47,13 @@ export function getErrorDescription(res: Response): Promise<string> {
         if (typeof record.message === "string") return record.message
         if (typeof record.detail === "string") return record.detail
       }
+
       return `The server responded with ${res.status}. Please try again.`
     })
     .catch(() => `The server responded with ${res.status}. Please try again.`)
 }
 
-function normalizeDestination(raw: unknown): Destination | null {
+export function normalizeDestination(raw: unknown): Destination | null {
   if (!raw || typeof raw !== "object") return null
 
   const record = raw as Record<string, unknown>
@@ -54,7 +67,8 @@ function normalizeDestination(raw: unknown): Destination | null {
       : undefined
 
   const reviewCount =
-    typeof record.reviewCount === "number" || asString(record.reviewCount) !== ""
+    typeof record.reviewCount === "number" ||
+    asString(record.reviewCount) !== ""
       ? asNumber(record.reviewCount)
       : undefined
 
@@ -79,13 +93,37 @@ function normalizeDestination(raw: unknown): Destination | null {
 }
 
 /**
- * Reads every travel package from the backend's MongoDB collection.
- * Returns `null` when the backend cannot be reached so the page can
- * distinguish "no data" from "failed to load".
+ * Reads every travel package from the backend.
+ * Returns null when the backend cannot be reached or returns invalid data.
  */
 export async function getDestinations(): Promise<Destination[] | null> {
   try {
-    const res = await fetch(`${apiBaseUrl}/destinations`, { cache: "no-store" })
+    const res = await fetch(`${apiBaseUrl}/destinations`, {
+      cache: "no-store",
+    })
+
+    if (!res.ok) return null
+
+    const data: unknown = await res.json()
+    if (!Array.isArray(data)) return null
+
+    return data
+      .map(normalizeDestination)
+      .filter((item): item is Destination => item !== null)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Reads the backend's featured packages (`GET /featured-destination`).
+ * Returns null when the backend cannot be reached or returns invalid data.
+ */
+export async function getFeaturedDestinations(): Promise<Destination[] | null> {
+  try {
+    const res = await fetch(`${apiBaseUrl}/featured-destination`, {
+      cache: "no-store",
+    })
 
     if (!res.ok) return null
 
@@ -114,19 +152,24 @@ export type DestinationMutationResult =
   | { ok: false; description: string }
 
 /**
- * Sends the edited travel package to the backend's `PATCH /destination/:id`.
- * Returns a human-readable error description, or `{ ok: true }` on success.
+ * Updates a travel package using PATCH /destinations/:id.
+ * `token` is the visitor's better-auth JWT — the backend rejects
+ * this route without it.
  */
 export async function updateDestination(
   id: string,
   payload: Record<string, unknown>,
+  token: string | null,
 ): Promise<DestinationMutationResult> {
   try {
     const res = await fetch(
       `${apiBaseUrl}/destinations/${encodeURIComponent(id)}`,
       {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(payload),
       },
     )
@@ -144,14 +187,22 @@ export async function updateDestination(
   }
 }
 
-/** Sends `DELETE /destination/:id` — same result shape as `updateDestination`. */
+/**
+ * Deletes a travel package using DELETE /destination/:id.
+ * `token` is the visitor's better-auth JWT — the backend rejects
+ * this route without it.
+ */
 export async function deleteDestination(
   id: string,
+  token: string | null,
 ): Promise<DestinationMutationResult> {
   try {
     const res = await fetch(
       `${apiBaseUrl}/destination/${encodeURIComponent(id)}`,
-      { method: "DELETE" },
+      {
+        method: "DELETE",
+        headers: token ? { authorization: `Bearer ${token}` } : undefined,
+      },
     )
 
     if (!res.ok) {
@@ -175,27 +226,3 @@ export type DestinationLookup =
   | { status: "not-found" }
   | { status: "error" }
 
-/**
- * Reads a single travel package by its MongoDB id.
- *
- * The backend answers 200 with a `null` body for ids it does not know and 500
- * for ids it cannot parse, so anything that is not a usable document is
- * reported as `not-found`; `error` is reserved for transport failures.
- */
-export async function getDestination(id: string): Promise<DestinationLookup> {
-  try {
-    const res = await fetch(
-      `${apiBaseUrl}/destinations/${encodeURIComponent(id)}`,
-      { cache: "no-store" },
-    )
-
-    if (!res.ok) return { status: "not-found" }
-
-    const destination = normalizeDestination(await res.json())
-    return destination
-      ? { status: "found", destination }
-      : { status: "not-found" }
-  } catch {
-    return { status: "error" }
-  }
-}

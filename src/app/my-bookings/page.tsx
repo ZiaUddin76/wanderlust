@@ -1,5 +1,6 @@
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
+import { getTokenFromServer } from '@/lib/getTokenFromServer';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
@@ -19,7 +20,7 @@ const MyBookingsPage = async () => {
     redirect('/login');
   }
 
-  const bookings = await getBookingsByEmail(user.email);
+  const bookings = await getBookingsByEmail(user.email, await getTokenFromServer());
 
   return (
     <main className="flex min-h-screen flex-1 flex-col bg-white">

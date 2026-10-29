@@ -7,8 +7,8 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   images: {
     remotePatterns: [
-      // Travel packages store arbitrary image URLs (MongoDB documents).
-      { protocol: "http", hostname: "localhost", port: "8000" },
+      // Travel packages store arbitrary image URLs (MongoDB documents),
+      // and virtually all hosts serve them over https.
       { protocol: "https", hostname: "**" },
     ],
   },

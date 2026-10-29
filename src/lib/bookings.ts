@@ -59,14 +59,21 @@ function normalizeBooking(raw: unknown): Booking | null {
 
 /**
  * Reads every booking the backend has stored for the given user email.
- * Returns `null` when the backend cannot be reached so the page can
- * distinguish "no data" from "failed to load".
+ * `token` is the visitor's better-auth JWT — the backend rejects this
+ * route without it. Returns `null` when the backend cannot be reached so
+ * the page can distinguish "no data" from "failed to load".
  */
-export async function getBookingsByEmail(email: string): Promise<Booking[] | null> {
+export async function getBookingsByEmail(
+  email: string,
+  token: string | null,
+): Promise<Booking[] | null> {
   try {
     const res = await fetch(
       `${apiBaseUrl}/my-bookings/${encodeURIComponent(email)}`,
-      { cache: "no-store" },
+      {
+        cache: "no-store",
+        headers: token ? { authorization: `Bearer ${token}` } : undefined,
+      },
     )
 
     if (!res.ok) return null
@@ -94,14 +101,20 @@ export type BookingMutationResult =
   | { ok: true }
   | { ok: false; description: string }
 
-/** Sends `DELETE /mybookings/:id` — same result shape as `deleteDestination`. */
+/** Sends `DELETE /mybookings/:id` — same result shape as `deleteDestination`.
+ * `token` is the visitor's better-auth JWT — the backend rejects this
+ * route without it. */
 export async function cancelBooking(
   id: string,
+  token: string | null,
 ): Promise<BookingMutationResult> {
   try {
     const res = await fetch(
       `${apiBaseUrl}/mybookings/${encodeURIComponent(id)}`,
-      { method: "DELETE" },
+      {
+        method: "DELETE",
+        headers: token ? { authorization: `Bearer ${token}` } : undefined,
+      },
     )
 
     if (!res.ok) {

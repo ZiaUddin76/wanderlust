@@ -11,7 +11,8 @@ import {
 import { notFound } from "next/navigation"
 
 import { DestinationBookingCard } from "@/components/destination-booking-card"
-import { fallbackDestinationImage, getDestination } from "@/lib/destinations"
+import { getDestination } from "@/lib/destination-server"
+import { fallbackDestinationImage} from "@/lib/destinations"
 import { EditDestinationDialog } from "@/components/EditDestinationDialogue"
 import { DeleteDestinationDialog } from "@/components/DeleteDestinationDialogue"
 
